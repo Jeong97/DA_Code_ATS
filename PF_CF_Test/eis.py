@@ -38,6 +38,7 @@ path = r"C:\Users\jeongbs1\오토실리콘\1. python_code\ATS_Code\PF_CF_Test"
 
 # Load raw data
 raw_data = pd.read_csv(path+"/03-02 DS03 RDF - PassFail Discrimination V0.0 240910.csv")
+raw_data["P/F"] = raw_data["P/F"].replace({"P":1, "F":0})
 
 # Split by Cell Name
 Cell_name = raw_data["Cell Name"].unique()
@@ -71,15 +72,18 @@ plt.xlabel("Z_Real(mOhm)")
 plt.ylabel("Z_Imaginary(mOhm)")
 plt.tight_layout()
 
+
 # Board plot by Cell Name
 plt.figure()
 for i in range(len(Cell_name)):
     x = list(data[(Cell_name[i])]["Freq"])
-    y = list(data[(Cell_name[i])]["Zre (mohm)"])
+    y = list((data[(Cell_name[i])]["Zre (mohm)"]))
     plt.plot(x, y, "o-", label=Cell_name[i])
 plt.xlabel("Freq")
 plt.ylabel("Z_Imaginary(mOhm)")
 plt.tight_layout()
+
+
 
 ''' Data PreProcessing '''
 # Make new dataframe by frequency
@@ -100,10 +104,24 @@ n = len(data)
 sturges_bins = int(np.ceil(np.log2(n) + 1)) # 1. Sturges' Formula
 sqrt_bins = int(np.sqrt(n)) # Square-root Choice
 
+use_ft = ["Zre (mohm)", "Zim (mohm)", "Mag (mohm)", "Phase"]
+Zre_dev_f, Zim_dev_f, Mag_dev_f, Phs_dev_f, = [], [], [], []
+for i in (use_ft):
+    plt.figure()
+    for f in freq:
+        plt.plot(f, abs((freq_df[f][i]).max()-(freq_df[f][i]).min()), "o-", color="blue")
+    plt.xlabel("Frequency(Hz)")
+    plt.ylabel(str(i)+" Deviation")
+    plt.tight_layout()
+
+print(np.where(Zre_dev_f == np.max(Zre_dev_f)),
+      np.where(Zim_dev_f == np.max(Zim_dev_f)),
+      np.where(Mag_dev_f == np.max(Mag_dev_f)),
+      np.where(Phs_dev_f ==np.max(Phs_dev_f)))
+
 
 # Visualization Feqtures's histogram
-use_ft = ["Zre (mohm)", "Zim (mohm)", "Mag (mohm)", "Phase"]
-slt_freq = freq[-11]
+slt_freq = freq[(np.where(freq==np.array(20.0)))[0][0]]
 fig, axs = plt.subplots(ncols=2, nrows=2)
 for i, ft in enumerate(use_ft):
     row = int(i / 2)
@@ -119,29 +137,76 @@ fig.suptitle('Frequency Point at '+str(slt_freq)+"Hz")
 plt.tight_layout()
 
 
+import zipfile
+zip_filename = 'dataframes.zip'
+with zipfile.ZipFile(zip_filename, 'w') as zipf:
+    for name, df in freq_df.items():
+        csv_filename = f"{name}_Hz_df.csv"  # 각 DataFrame을 CSV 파일로 저장할 이름
+        df.to_csv(csv_filename, index=False)  # 데이터프레임을 CSV로 저장
+        zipf.write(csv_filename)  # CSV 파일을 ZIP에 추가
+        os.remove(csv_filename)  # 임시 CSV 파일 삭제
+
+print(f"{zip_filename} 파일이 생성되었습니다.")
+
+
 
 ''' Machine Learning Model '''
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from lightgbm import LGBMClassifier
+from lightgbm import plot_importance
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import cross_val_score
 
+
 # Set Feature & Target
-Model_data = freq_df[freq[-11]]
+Model_data = freq_df[freq[(np.where(freq==np.array(20.0)))[0][0]]]
 Feature = Model_data.drop(["Cell Name", "Freq", "P/F"], axis=1, inplace=False)
 Target = Model_data["P/F"]
 
 # Split Train and Test set
-X_train, X_test, y_train, y_test = train_test_split(Feature, Target, test_size=0.3 , random_state= 100)
+X_train, X_dummy, y_train, y_dummy = train_test_split(Feature, Target, test_size=0.3 , random_state= 100)
+X_test, X_val, y_test, y_val= train_test_split(X_dummy, y_dummy, test_size=0.5, random_state=156 )
 
 # Use Random Forest Classifier Model
-rf_clf = RandomForestClassifier(n_estimators=100, random_state=0, n_jobs=-1)
-rf_clf.fit(X_train , y_train)
-pred = rf_clf.predict(X_test)
-accuracy = cross_val_score(rf_clf, Feature, Target, scoring="accuracy", cv = 5)
-print('예측 정확도: {0:.4f}'.format(np.mean(accuracy)))
+# rf_clf = RandomForestClassifier(n_estimators=100, random_state=0, n_jobs=-1)
+lgb_clf = LGBMClassifier(n_estimators=1000, learning_rate=0.05)
+
+
+# Check the model scocre
+cross_val_accuracy = cross_val_score(lgb_clf, X_train, y_train, scoring="accuracy", cv = 5)
+print(f'Cross-Validation Accuracy (Train Set): {np.mean(cross_val_accuracy):.4f}')
+
+
+lgb_clf.fit(X_train , y_train, eval_metric="logloss", verbose=False)
+# model prediction to test
+test_predictions = lgb_clf.predict(X_test)
+test_accuracy = accuracy_score(y_test, test_predictions)
+print(f'Test Set Accuracy: {test_accuracy:.4f}')
+
+
+# model training and Testing
+pred_val = lgb_clf.predict(X_val)
+val_accuracy = accuracy_score(y_val, pred_val)
+print(f'Validation Set Accuracy: {val_accuracy:.4f}')
+
+
+fig, ax = plt.subplots()
+plot_importance(lgb_clf, ax=ax)
+plt.show()
+
+# Train + Validation 세트로 모델 재학습
+# X_train_val = pd.concat([X_train, X_val], axis=0)
+# y_train_val = pd.concat([y_train, y_val], axis=0)
+# rf_clf.fit(X_train_val, y_train_val)
+
+# Test 세트에서 최종 모델 평가
+# final_test_predictions = rf_clf.predict(X_test)
+# final_test_accuracy = accuracy_score(y_test, final_test_predictions)
+# print(f'Test Set Accuracy (After Re-Training): {final_test_accuracy:.4f}')
+
 
 # check the feature importance
 ftr_importances_values = rf_clf.feature_importances_
