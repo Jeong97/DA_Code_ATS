@@ -10,6 +10,7 @@ warnings.simplefilter("ignore")
 import scipy.stats as st
 from scipy.stats import shapiro, norm, gaussian_kde
 from statsmodels.graphics.gofplots import qqplot, ProbPlot
+import scipy.integrate as integrate
 
 ''' Function Declaration Collection For Graph setting, Split Cycle by Current and Extraction Parameter '''
 # Graph Font setting
@@ -277,6 +278,56 @@ for f in freq[19:20]:
         axs[row][col].set_ylabel('Sample Quantiles')
         axs[row][col].legend()
     plt.tight_layout(rect=[0, 0, 1, 0.96])
+
+
+# Calculate to PUR
+pur_M, pur_F, pur_Re, pur_Im = [], [], [], []
+intersection_dict = {ft: [] for ft in snd_col}
+for f in freq[::-1]:
+    sdf_draw_df_0 = freq_df[f][freq_df[f]["P/F"] == 0]  # P/F == 0
+    sdf_draw_df_1 = freq_df[f][freq_df[f]["P/F"] == 1]
+
+    sdf_draw_df_0_numeric = sdf_draw_df_0.select_dtypes(include=[np.number]).drop(["Freq", "P/F"], axis=1)
+    sdf_draw_df_1_numeric = sdf_draw_df_1.select_dtypes(include=[np.number]).drop(["Freq", "P/F"], axis=1)
+
+    for i, ft in enumerate(snd_col):
+        dummy_draw_0 = sdf_draw_df_0[ft]
+        dummy_draw_1 = sdf_draw_df_1[ft]
+
+        # KDE plot 생성
+        kde_0 = gaussian_kde(dummy_draw_0)
+        kde_1 = gaussian_kde(dummy_draw_1)
+
+        min_val = min(dummy_draw_0.min(), dummy_draw_1.min())
+        max_val = max(dummy_draw_0.max(), dummy_draw_1.max())
+        x_vals = np.linspace(min_val, max_val, 1000)
+
+        kde_0_vals = kde_0(x_vals)
+        kde_1_vals = kde_1(x_vals)
+
+        # 교차 영역 계산
+        intersection_vals = np.minimum(kde_0_vals, kde_1_vals)
+        intersection_area = integrate.simpson(intersection_vals, x=x_vals)
+
+        intersection_dict[ft].append(intersection_area)
+
+        # 교차 면적 출력
+        # print(f"{ft}의 교차 영역 면적: {intersection_area:.4f}")
+intersection_df = pd.DataFrame.from_dict(intersection_dict, orient='index').transpose()
+intersection_df = pd.concat([intersection_df, pd.DataFrame(freq[::-1], columns=["Frequency"])], axis=1)
+
+fig, axs = plt.subplots(ncols=2, nrows=2)
+fig.suptitle("PUR")
+for i, ft in enumerate(intersection_df.columns):
+    row = int(i / 2)
+    col = i % 2
+    axs[row][col].plot(intersection_df[ft], "o")
+    axs[row][col].set_yticks(np.arange(0,1,0.1))
+    # axs[row][col].set_xlabel("Frequency(Hz)")
+    axs[row][col].set_ylabel(ft)
+plt.tight_layout()
+
+
 
 
 # T-Test
