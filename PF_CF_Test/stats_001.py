@@ -74,13 +74,13 @@ plt.tight_layout()
 plt.figure()
 for i in range(len(Cell_name)):
     x = list(data[(Cell_name[i])]["Freq"])
-    y = list((data[(Cell_name[i])]["Zre (mohm)"]))
+    y = list((data[(Cell_name[i])]["Mag (mohm)"]))
     if data[(Cell_name[i])]["P/F"][0] == 0:
-        plt.plot(x, y, "o-", label=Cell_name[i], color="red")
+        plt.plot(x, y, "o", label=Cell_name[i], color="red")
     else:
-        plt.plot(x, y, "o-", label=Cell_name[i], color="blue")
-plt.xlabel("Freq")
-plt.ylabel("Z_Real(mOhm)")
+        plt.plot(x, y, "o", label=Cell_name[i], color="blue")
+plt.xlabel("Frequency")
+plt.ylabel("Magnitude")
 plt.tight_layout()
 
 
@@ -316,17 +316,43 @@ for f in freq[::-1]:
 intersection_df = pd.DataFrame.from_dict(intersection_dict, orient='index').transpose()
 intersection_df = pd.concat([intersection_df, pd.DataFrame(freq[::-1], columns=["Frequency"])], axis=1)
 
+
+uniform_Freq = np.linspace(intersection_df['Frequency'].min(), intersection_df['Frequency'].max(), 30)
+Freq_uniform = pd.DataFrame({'Frequency': uniform_Freq})
+Freq_uniform['Frequency'] = np.interp(uniform_Freq, intersection_df['Frequency'], intersection_df['Frequency'])
+
 fig, axs = plt.subplots(ncols=2, nrows=2)
 fig.suptitle("PUR")
 for i, ft in enumerate(intersection_df.columns):
     row = int(i / 2)
     col = i % 2
-    axs[row][col].plot(intersection_df[ft], "o")
+    axs[row][col].plot(list(Freq_uniform['Frequency']), intersection_df[ft], "o")
     axs[row][col].set_yticks(np.arange(0,1,0.1))
     # axs[row][col].set_xlabel("Frequency(Hz)")
     axs[row][col].set_ylabel(ft)
 plt.tight_layout()
 
+fig, axs = plt.subplots(ncols=2, nrows=2, figsize=(12, 8))
+fig.suptitle("PUR 1~100Hz")
+for i, ft in enumerate(intersection_df.columns):
+    row = int(i / 2)
+    col = i % 2
+    axs[row][col].plot(list(intersection_df['Frequency'][:21]), intersection_df[ft][:21], "o")
+    axs[row][col].set_yticks(np.arange(0,0.65,0.05))
+    axs[row][col].set_xlabel("Frequency(Hz)")
+    axs[row][col].set_ylabel(ft)
+plt.tight_layout()
+
+fig, axs = plt.subplots(ncols=2, nrows=2, figsize=(12, 8))
+fig.suptitle("PUR 1~10Hz")
+for i, ft in enumerate(intersection_df.columns):
+    row = int(i / 2)
+    col = i % 2
+    axs[row][col].plot(list(intersection_df['Frequency'][:11]), intersection_df[ft][:11], "o")
+    axs[row][col].set_yticks(np.arange(0,1,0.1))
+    axs[row][col].set_xlabel("Frequency(Hz)")
+    axs[row][col].set_ylabel(ft)
+plt.tight_layout()
 
 
 
