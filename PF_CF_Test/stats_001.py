@@ -62,9 +62,9 @@ for i in range(len(Cell_name)):
     x = list(data[(Cell_name[i])]["Zre (mohm)"])
     y = list(data[(Cell_name[i])]["Zim (mohm)"])
     if data[(Cell_name[i])]["P/F"][0] == 0:
-        plt.plot(x, y, "o-", label=Cell_name[i], color="red")
+        plt.plot(x, y, "o", label=Cell_name[i], color="red")
     else:
-        plt.plot(x, y, "o-", label=Cell_name[i], color="blue")
+        plt.plot(x, y, "o", label=Cell_name[i], color="blue")
 plt.xlabel("Z_Real(mOhm)")
 plt.ylabel("Z_Imaginary(mOhm)")
 plt.tight_layout()
@@ -103,7 +103,6 @@ plt.tight_layout()
 # Make new dataframe by frequency
 freq = list((data[(Cell_name[0])]["Freq"]))
 del freq[3]
-
 
 freq_df = {}
 for f in freq:
@@ -149,7 +148,8 @@ len(snd_df[f][snd_df[f]["P/F"] == 1])
 snd_col = ["Zre (mohm)", "Zim (mohm)", "Mag (mohm)", "Phase"]
 # Normal Distribution
 # for f in freq[(np.where(freq==np.array(10.0)))[0][0]:]:
-for f in freq[19:20]:
+img_path = "C:/Users/jeongbs1/Downloads/raw_distribution_plot"
+for f in freq:
     sdf_draw_df_0 = freq_df[f][freq_df[f]["P/F"] == 0]  # P/F == 0
     sdf_draw_df_1 = freq_df[f][freq_df[f]["P/F"] == 1]
 
@@ -172,7 +172,7 @@ for f in freq[19:20]:
         # 동적으로 빈 수 설정: 히스토그램의 균형 유지
         num_bins_0 = max(10, int(np.sqrt(len(dummy_draw_0))))
         num_bins_1 = max(10, int(np.sqrt(len(dummy_draw_1))))
-        bins = np.linspace(min_val, max_val, 30)
+        # bins = np.linspace(min_val, max_val, 10)
         # bins = np.linspace(min_val, max_val, max(num_bins_0, num_bins_1), 30)
 
         # KDE plot for P/F == 0
@@ -184,11 +184,11 @@ for f in freq[19:20]:
         x_vals_1 = np.linspace(min_val, max_val, 100)
 
         # Plot histogram and KDE for P/F == 0 (blue color)
-        axs[row][col].hist(dummy_draw_0, bins=bins, color='red', edgecolor='black', density=True, alpha=0.6,label="F")
+        axs[row][col].hist(dummy_draw_0, bins=10, color='red', edgecolor='black', density=True, alpha=0.6,label="F")
         axs[row][col].plot(x_vals_0, kde_0(x_vals_0), color='red', lw=2)
 
         # Plot histogram and KDE for P/F == 1 (red color)
-        axs[row][col].hist(dummy_draw_1, bins=bins, color='blue', edgecolor='black', density=True, alpha=0.6,label="P")
+        axs[row][col].hist(dummy_draw_1, bins=10, color='blue', edgecolor='black', density=True, alpha=0.6,label="P")
         axs[row][col].plot(x_vals_1, kde_1(x_vals_1), color='blue', lw=2)
 
         # 레이블 설정
@@ -196,11 +196,13 @@ for f in freq[19:20]:
         axs[row][col].set_ylabel('Density')
         axs[row][col].legend()
     plt.tight_layout(rect=[0, 0, 1, 0.96])  # suptitle과 겹치지 않도록 설정
+    plt.savefig(img_path + "./raw_"+ str(f) + "Hz.png")
 
 
 # Z Distribution
 # for f in freq[(np.where(freq==np.array(10.0)))[0][0]:]:
-for f in freq[19:20]:
+img_path = "C:/Users/jeongbs1/Downloads/z_distribution_plot"
+for f in freq:
     sdf_draw_df_0 = snd_df[f][snd_df[f]["P/F"] == 0]  # P/F == 0
     sdf_draw_df_1 = snd_df[f][snd_df[f]["P/F"] == 1]
 
@@ -209,7 +211,7 @@ for f in freq[19:20]:
 
     min_val = min(sdf_draw_df_0_numeric.min().min(), sdf_draw_df_1_numeric.min().min())
     max_val = max(sdf_draw_df_0_numeric.max().max(), sdf_draw_df_1_numeric.max().max())
-    bins = np.linspace(min_val, max_val, 30)
+    # bins = np.linspace(min_val, max_val, 30)
 
     fig, axs = plt.subplots(ncols=2, nrows=2, figsize=(12, 8))
     fig.suptitle('Z distribution Frequency Point at ' + str(f) + "Hz")
@@ -229,22 +231,24 @@ for f in freq[19:20]:
         x_vals_1 = np.linspace(min_val, max_val, 100)
 
         # Plot histogram and KDE for P/F == 0 (blue color)
-        axs[row][col].hist(dummy_draw_0, bins=bins, color='red', edgecolor='black', density=True, alpha=0.6,label="F")
+        axs[row][col].hist(dummy_draw_0, bins=10, color='red', edgecolor='black', density=True, alpha=0.6,label="F")
         axs[row][col].plot(x_vals_0, kde_0(x_vals_0), color='red', lw=2)
 
         # Plot histogram and KDE for P/F == 1 (red color)
-        axs[row][col].hist(dummy_draw_1, bins=bins, color='blue', edgecolor='black', density=True, alpha=0.6,label="P")
+        axs[row][col].hist(dummy_draw_1, bins=10, color='blue', edgecolor='black', density=True, alpha=0.6,label="P")
         axs[row][col].plot(x_vals_1, kde_1(x_vals_1), color='blue', lw=2)
 
         # 레이블 설정
-        axs[row][col].set_xlabel(ft)
+        axs[row][col].set_xlabel("Standard Deviation")
         axs[row][col].set_ylabel('Density')
         axs[row][col].legend()
     plt.tight_layout(rect=[0, 0, 1, 0.96])  # suptitle과 겹치지 않도록 설정
+    plt.savefig(img_path + "./Z_" + str(f) + "Hz.jpg")
 
 
 # QQ-Plot
-for f in freq[19:20]:
+img_path = "C:/Users/jeongbs1/Downloads/qq_plot"
+for f in freq:
 # for f in freq[(np.where(freq==np.array(10.0)))[0][0]:]:
     sdf_draw_df_0 = snd_df[f][snd_df[f]["P/F"] == 0]  # P/F == 0
     sdf_draw_df_1 = snd_df[f][snd_df[f]["P/F"] == 1]  # P/F == 1
@@ -274,15 +278,22 @@ for f in freq[19:20]:
         axs[row][col].plot(probplot_1.theoretical_quantiles, mean_1 + std_1 * probplot_1.theoretical_quantiles / probplot_1.theoretical_quantiles.std(),'b--')
 
         # 레이블 및 범례 설정
-        axs[row][col].set_xlabel(ft)
+        axs[row][col].set_title(ft)
+        axs[row][col].set_xlabel("Standard Deviation")
         axs[row][col].set_ylabel('Sample Quantiles')
         axs[row][col].legend()
     plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.savefig(img_path + "./qq_" + str(f) + "Hz.jpg")
 
 
 # Calculate to PUR
+# 결과 저장용 리스트 초기화
 pur_M, pur_F, pur_Re, pur_Im = [], [], [], []
-intersection_dict = {ft: [] for ft in snd_col}
+intersection_dict = {ft: [] for ft in ['Zre (mohm)', 'Zim (mohm)', 'Mag (mohm)', 'Phase']}
+left_dict = {ft: [] for ft in ['Zre (mohm)', 'Zim (mohm)', 'Mag (mohm)', 'Phase']}
+right_dict = {ft: [] for ft in ['Zre (mohm)', 'Zim (mohm)', 'Mag (mohm)', 'Phase']}
+
+# 각 주파수에 대한 반복문
 for f in freq[::-1]:
     sdf_draw_df_0 = freq_df[f][freq_df[f]["P/F"] == 0]  # P/F == 0
     sdf_draw_df_1 = freq_df[f][freq_df[f]["P/F"] == 1]
@@ -290,11 +301,11 @@ for f in freq[::-1]:
     sdf_draw_df_0_numeric = sdf_draw_df_0.select_dtypes(include=[np.number]).drop(["Freq", "P/F"], axis=1)
     sdf_draw_df_1_numeric = sdf_draw_df_1.select_dtypes(include=[np.number]).drop(["Freq", "P/F"], axis=1)
 
+    # 각 피처에 대해 KDE 생성 및 적분 계산
     for i, ft in enumerate(snd_col):
         dummy_draw_0 = sdf_draw_df_0[ft]
         dummy_draw_1 = sdf_draw_df_1[ft]
 
-        # KDE plot 생성
         kde_0 = gaussian_kde(dummy_draw_0)
         kde_1 = gaussian_kde(dummy_draw_1)
 
@@ -305,54 +316,104 @@ for f in freq[::-1]:
         kde_0_vals = kde_0(x_vals)
         kde_1_vals = kde_1(x_vals)
 
-        # 교차 영역 계산
-        intersection_vals = np.minimum(kde_0_vals, kde_1_vals)
-        intersection_area = integrate.simpson(intersection_vals, x=x_vals)
+        # 교차 지점 찾기
+        difference = kde_0_vals - kde_1_vals
+        intersection_indices = np.where(np.diff(np.sign(difference)))[0]
 
-        intersection_dict[ft].append(intersection_area)
+        if len(intersection_indices) > 0:
+            intersection_index = intersection_indices[0]
 
-        # 교차 면적 출력
-        # print(f"{ft}의 교차 영역 면적: {intersection_area:.4f}")
+            # 교차 지점 이전 (왼쪽) 영역 적분
+            x_vals_left = x_vals[:intersection_index + 1]
+            min_kde_vals_left = np.minimum(kde_0_vals[:intersection_index + 1], kde_1_vals[:intersection_index + 1])
+            left_area = integrate.simpson(min_kde_vals_left, x=x_vals_left)
+            left_dict[ft].append(left_area)
+
+            # 교차 지점 이후 (오른쪽) 영역 적분
+            x_vals_right = x_vals[intersection_index:]
+            min_kde_vals_right = np.minimum(kde_0_vals[intersection_index:], kde_1_vals[intersection_index:])
+            right_area = integrate.simpson(min_kde_vals_right, x=x_vals_right)
+            right_dict[ft].append(right_area)
+
+            # 전체 교차 영역 적분
+            intersection_area = left_area + right_area
+            intersection_dict[ft].append(intersection_area)
+        else:
+            # 교차 지점이 없는 경우, 전체 영역을 적분
+            intersection_area = integrate.simpson(np.minimum(kde_0_vals, kde_1_vals), x=x_vals)
+            intersection_dict[ft].append(intersection_area)
+            left_dict[ft].append(0)  # 교차 지점이 없으므로 왼쪽, 오른쪽이 없음
+            right_dict[ft].append(0)
+
+# 기존의 intersection_df를 생성하는 코드
 intersection_df = pd.DataFrame.from_dict(intersection_dict, orient='index').transpose()
 intersection_df = pd.concat([intersection_df, pd.DataFrame(freq[::-1], columns=["Frequency"])], axis=1)
 
+# left_dict와 right_dict를 데이터프레임으로 변환
+left_df = pd.DataFrame.from_dict(left_dict, orient='index').transpose()
+right_df = pd.DataFrame.from_dict(right_dict, orient='index').transpose()
 
-uniform_Freq = np.linspace(intersection_df['Frequency'].min(), intersection_df['Frequency'].max(), 30)
-Freq_uniform = pd.DataFrame({'Frequency': uniform_Freq})
-Freq_uniform['Frequency'] = np.interp(uniform_Freq, intersection_df['Frequency'], intersection_df['Frequency'])
+# intersection_df에 왼쪽(left)과 오른쪽(right) 적분 값을 각각 추가
+intersection_df = pd.concat([intersection_df, left_df.add_prefix("Left_"), right_df.add_prefix("Right_")], axis=1)
 
-fig, axs = plt.subplots(ncols=2, nrows=2)
-fig.suptitle("PUR")
-for i, ft in enumerate(intersection_df.columns):
-    row = int(i / 2)
-    col = i % 2
-    axs[row][col].plot(list(Freq_uniform['Frequency']), intersection_df[ft], "o")
-    axs[row][col].set_yticks(np.arange(0,1,0.1))
-    # axs[row][col].set_xlabel("Frequency(Hz)")
-    axs[row][col].set_ylabel(ft)
-plt.tight_layout()
+# 결과 출력
+print(intersection_df)
+print(intersection_df.columns.sort_values())
 
-fig, axs = plt.subplots(ncols=2, nrows=2, figsize=(12, 8))
-fig.suptitle("PUR 1~100Hz")
-for i, ft in enumerate(intersection_df.columns):
-    row = int(i / 2)
-    col = i % 2
-    axs[row][col].plot(list(intersection_df['Frequency'][:21]), intersection_df[ft][:21], "o")
-    axs[row][col].set_yticks(np.arange(0,0.65,0.05))
-    axs[row][col].set_xlabel("Frequency(Hz)")
-    axs[row][col].set_ylabel(ft)
-plt.tight_layout()
+inter_df_col = ['Frequency', 'Mag (mohm)', 'Left_Mag (mohm)', 'Right_Mag (mohm)',
+ 'Left_Phase', 'Right_Phase', 'Phase',
+ 'Left_Zre (mohm)', 'Right_Zre (mohm)', 'Zre (mohm)',
+ 'Left_Zim (mohm)', 'Right_Zim (mohm)', 'Zim (mohm)']
+len(inter_df_col[1:])
+
 
 fig, axs = plt.subplots(ncols=2, nrows=2, figsize=(12, 8))
-fig.suptitle("PUR 1~10Hz")
-for i, ft in enumerate(intersection_df.columns):
+fig.suptitle("Frequency range : 1~100Hz")
+label = ["Whole PUR", "Left PUR", "Right PUR"]
+features_per_plot = 3
+num_plots = len(inter_df_col[1:]) // features_per_plot
+for i in range(num_plots):
     row = int(i / 2)
     col = i % 2
-    axs[row][col].plot(list(intersection_df['Frequency'][:11]), intersection_df[ft][:11], "o")
-    axs[row][col].set_yticks(np.arange(0,1,0.1))
+    start_idx = i * features_per_plot
+    end_idx = start_idx + features_per_plot
+
+    for l, ft in enumerate(inter_df_col[start_idx + 1:end_idx + 1]):
+        axs[row][col].plot(list(intersection_df.index[:21]), intersection_df[ft][:21] * np.array(100), "o",label=label[l])
+
+    axs[row][col].set_title(ft)
     axs[row][col].set_xlabel("Frequency(Hz)")
-    axs[row][col].set_ylabel(ft)
+    axs[row][col].set_ylabel("PUR(%)")
+    axs[row][col].set_xticks(ticks=list(intersection_df.index[:21:4]), labels=list(intersection_df['Frequency'][:21:4]))
+    axs[row][col].set_yticks(np.arange(0,60,5))
+    axs[row][col].legend(loc="upper left", fontsize=10)  # 각 피처에 대한 범례 추가
 plt.tight_layout()
+
+
+fig, axs = plt.subplots(ncols=2, nrows=2, figsize=(12, 8))
+fig.suptitle("Frequency range : 1~10Hz")
+# 각 서브플롯에 3개의 피처를 한 번에 그리기
+features_per_plot = 3
+num_plots = len(inter_df_col[1:]) // features_per_plot
+label = ["Whole PUR", "Left PUR", "Right PUR"]
+for i in range(num_plots):
+    row = int(i / 2)
+    col = i % 2
+    start_idx = i * features_per_plot
+    end_idx = start_idx + features_per_plot
+
+    for l, ft in enumerate(inter_df_col[start_idx + 1:end_idx + 1]):
+        axs[row][col].plot(list(intersection_df.index[:11]), intersection_df[ft][:11] * np.array(100), "o", label=label[l])
+
+    axs[row][col].set_title(ft)
+    axs[row][col].set_xlabel("Frequency(Hz)")
+    axs[row][col].set_ylabel("PUR(%)")
+    axs[row][col].set_xticks(ticks=list(intersection_df.index[:11:2]), labels=list(intersection_df['Frequency'][:11:2]))
+    axs[row][col].set_yticks(np.arange(0, 16, 2))
+    axs[row][col].legend(loc="upper left", fontsize=10)  # 각 피처에 대한 범례 추가
+plt.tight_layout()
+
+
 
 
 
