@@ -38,13 +38,14 @@ setGraphFont()
 
 ''' Raw Data EDA '''
 # Set path
-eis_path = "C:/Users/jeongbs1/오토실리콘/1. python_code/ATS_Code/PF_CF_Test"
-drt_path = "C:/Users/jeongbs1/오토실리콘/1. python_code/ATS_Code/PF_CF_Test/DRT_data"
+eis_path = "C:/Users/jeongbs1/오토실리콘/1. python_code/ATS_Code/PF_CF_Test/Raw_data"
+drt_path = eis_path+"./DRT_data"
 
 # Load EIS Raw data
-eis_raw_df = pd.read_csv(eis_path+"/03-02 DS03 RDF - PassFail Discrimination V0.0 240910.csv")
+eis_raw_df = pd.read_csv(eis_path+"./03-02 DS03 RDF - PassFail Discrimination V0.0 240910.csv")
 eis_raw_df["P/F"] = eis_raw_df["P/F"].replace({"P":1, "F":0})
 eis_raw_df.drop(columns=["ITER"], inplace=True)
+
 # Load DRT Raw data
 drt_flist = os.listdir(drt_path)
 drt_flist = [i for i in drt_flist if not any(exclude in i for exclude in ["NC01", "NC02", "NC03"])]
