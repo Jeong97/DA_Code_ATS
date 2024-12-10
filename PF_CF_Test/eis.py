@@ -43,7 +43,6 @@ raw_data["P/F"] = raw_data["P/F"].replace({"P":1, "F":0})
 # Split by Cell Name
 Cell_name = raw_data["Cell Name"].unique()
 
-
 # Make split dataframe
 data = {}
 for i in range(len(Cell_name)):
